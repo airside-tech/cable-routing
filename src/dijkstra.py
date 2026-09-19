@@ -78,6 +78,7 @@ class Graph:
         '''
         distances = {node: float("inf") for node in self.graph} # dict with node-value-pairs
         distances[source_node] = 0
+        predecessors = {node: None for node in self.graph}
     
         '''
         We need a way to iterate over graph nodes and to sort them, so a priority queue is better than
@@ -104,26 +105,20 @@ class Graph:
                 tentative_distance = current_distance + weight
                 if tentative_distance < distances[neighbor]:
                     distances[neighbor] = tentative_distance
+                    predecessors[neighbor] = current_node
                     heappush(pq, (tentative_distance, neighbor))
 
-
-            # To be able to trace the path which was the shortest, we add definition of predecessors
-            # , iteration over them and return those in addition to the distances
-            predecessors = {node: None for node in self.graph}
-
-            for node, distance in distances.items():
-                for neighbor, weight in self.graph[node].items():
-                    if distances[neighbor] == distance + weight:
-                        predecessors[neighbor] = node
-
-            return distances, predecessors
+        return distances, predecessors
         
         
 
 
     def shortest_path(self, source: str, target: str):
         # Generate the predecessors dict
-        _, predecessors = self.shortest_distances(source)
+        distances, predecessors = self.shortest_distances(source)
+
+        if distances[target] == float("inf"):
+            return []
 
         path = []
         current_node = target
@@ -144,18 +139,19 @@ def test_graphs(graph:dict, source_node:str, target_node:str):
             
     path = network.shortest_path(source_node, target_node)
     print(f"The shortest path from {source_node} to {target_node} is {path}")
-        
-     
+    
+    distances, predecessors = network.shortest_distances(source_node)
+    print(f"The shortest distances from {source_node} to {target_node} are {distances} and with predecessors {predecessors}")
         
         
 
 def main():
     
     graph1 = {
-    'A': {'B': 2, 'C': 5},
-    'B': {'C': 1, 'D': 4},
-    'C': {'D': 1},
-    'D': {}
+    'A': {'B': 3, 'D': 3},
+    'B': {'A': 3, 'C': 2, 'D': 4},
+    'C': {'B': 2, 'D': 1},
+    'D': {'A': 3, 'B': 4, 'C': 1}
     }
 
     graph2 = {
@@ -168,7 +164,7 @@ def main():
     "G": {"F": 2.5, "E": 7, "D": 10},
     } 
     
-    test_graphs(graph2, "B", "F")
+    test_graphs(graph1, "A", "C")
     
 
 if __name__ == "__main__":
