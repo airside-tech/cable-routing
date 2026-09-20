@@ -60,10 +60,10 @@ heappush: Adds an element to the queue with its associated priority.
 heappop: Removes and returns the element with the highest priority (the element with the smallest value).
 '''
 
-class Graph:
+class Graph_v1:
     
     def __init__(self, graph: dict = {}):
-        self.graph = graph  # A dictionary for the adjacency list
+        self.graph = graph  # Hash table for the adjacency list
 
 
     def add_edge(self, node1, node2, weight):
@@ -88,9 +88,9 @@ class Graph:
         Initialize the queue (The priority of each element inside pq will be its current value):
         '''
         pq = [(0,source_node)]
-        heapify(pq)
+        heapify(pq) # Convert pq to a queue object
         
-        # Create a set to hold the visited nodes:
+        # Create a set to hold the visited nodes (a set will only hold one entry of each node, so A, A, B, C, C, D = A,B,C,D)
         visited = set()
 
         while pq:  # While the priority queue isn't empty
@@ -132,20 +132,12 @@ class Graph:
         path.reverse()
 
         return path
-
-
-def test_graphs(graph:dict, source_node:str, target_node:str):
-    network = Graph(graph)
-            
-    path = network.shortest_path(source_node, target_node)
-    print(f"The shortest path from {source_node} to {target_node} is {path}")
-    
-    distances, predecessors = network.shortest_distances(source_node)
-    print(f"The shortest distances from {source_node} to {target_node} are {distances} and with predecessors {predecessors}")
-        
+  
         
 
 def main():
+    
+    # Basic tests of the class
     
     graph1 = {
     'A': {'B': 3, 'D': 3},
@@ -154,18 +146,27 @@ def main():
     'D': {'A': 3, 'B': 4, 'C': 1}
     }
 
-    graph2 = {
-    "A": {"B": 3, "C": 3},
-    "B": {"A": 3, "D": 3.5, "E": 2.8},
-    "C": {"A": 3, "E": 2.8, "F": 3.5},
-    "D": {"B": 3.5, "E": 3.1, "G": 10},
-    "E": {"B": 2.8, "C": 2.8, "D": 3.1, "G": 7},
-    "F": {"G": 2.5, "C": 3.5},
-    "G": {"F": 2.5, "E": 7, "D": 10},
-    } 
+    source_node = 'A'
+    target_node = 'C'
+    network = Graph_v1(graph1)
+            
+    path = network.shortest_path(source_node, target_node)
+    print(f"The shortest path from {source_node} to {target_node} is {path}")
     
-    test_graphs(graph1, "A", "C")
-    
+    distances, predecessors = network.shortest_distances(source_node)
+    print(f"The shortest distances from {source_node} to {target_node} are {distances} and with predecessors {predecessors}\n")
+      
+
+ #   graph2 = {
+ #   "A": {"B": 3, "C": 3},
+ #   "B": {"A": 3, "D": 3.5, "E": 2.8},
+ #   "C": {"A": 3, "E": 2.8, "F": 3.5},
+ #   "D": {"B": 3.5, "E": 3.1, "G": 10},
+ #   "E": {"B": 2.8, "C": 2.8, "D": 3.1, "G": 7},
+ #   "F": {"G": 2.5, "C": 3.5},
+ #   "G": {"F": 2.5, "E": 7, "D": 10},
+ #   } 
+
 
 if __name__ == "__main__":
     main()
