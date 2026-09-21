@@ -49,15 +49,17 @@ class Graph_v2:
 
 
         # Algorithm:
-        node = self.find_lowest_cost_node(self.costs) # find the lowest cost node that is unprocessed
+        node = self.find_lowest_cost_node(self.costs) # find the lowest cost node that is unprocessed (i.e. b = 2)
 
         # Continue until all nodes are processed
         while node is not None:
             cost = self.costs[node]         # using the next node
-            neighbors = self.graph[node]
+            neighbors = self.graph[node]    # i.e. grab the node B's hash table for the neighbors {a:3, fin: 5}
             
-            for n in neighbors.keys():      # Go through all neighbors of this node
-                new_cost = cost + neighbors[n] 
+            # Go through all neighbors of this node (list of nodes..[])
+            # neighbors.keys --> node names
+            for n in neighbors.keys():      
+                new_cost = cost + neighbors[n]   # "Cost of b, i.e. 2, neighbors[n]"
                 
                 # If it is cheaper to get to this neighbor by going through this node
                 if self.costs[n] > new_cost:
@@ -72,8 +74,7 @@ class Graph_v2:
             
             # Select next lowest cost, unprocessed node for the loop
             node = self.find_lowest_cost_node(self.costs)
-            
-            
+              
 
 
     def find_lowest_cost_node(self, costs):
@@ -88,6 +89,9 @@ class Graph_v2:
             if cost < lowest_cost and node not in self.processed:
                 # set it as the new lowest cost node
                 lowest_cost = cost 
+                lowest_cost_node = node
+
+        return lowest_cost_node
      
     
     
@@ -118,8 +122,11 @@ def main():
 
     G= Graph_v2(graph, costs, parents)
 
+    #Which nodes were processed?
+    print(G.processed)
+    print(G.costs)
 
-if __name__ == 'main':
+if __name__ == "__main__":
     main()
     
     
