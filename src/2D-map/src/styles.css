@@ -1,0 +1,185 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  gap: 1rem;
+}
+
+.top-bar h1 {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.top-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.top-controls button {
+  width: auto;
+  white-space: nowrap;
+}
+
+.room-select-label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+  min-width: clamp(14rem, 28vw, 26rem);
+}
+
+.room-select {
+  min-width: 100%;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 310px 1fr 320px;
+  min-height: calc(100vh - 62px);
+}
+
+aside {
+  padding: 0.85rem;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.left-panel {
+  border-right: 1px solid #e2e8f0;
+}
+
+.right-panel {
+  border-left: 1px solid #e2e8f0;
+}
+
+section {
+  margin-bottom: 1rem;
+  padding: 0.65rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+}
+
+h2 {
+  font-size: 0.95rem;
+  margin: 0 0 0.5rem;
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 0.45rem;
+}
+
+input,
+select,
+button {
+  width: 100%;
+  font: inherit;
+}
+
+input,
+select {
+  margin-top: 0.2rem;
+  padding: 0.32rem 0.42rem;
+}
+
+button {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+button.active {
+  background: #dbeafe;
+  border-color: #60a5fa;
+}
+
+.row-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
+.tool-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.tool-list li {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.35rem;
+  padding: 0.35rem;
+  font-size: 0.78rem;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.checkbox-row input {
+  width: auto;
+  margin: 0;
+}
+
+.canvas-container {
+  position: relative;
+  background: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+}
+
+.canvas-controls {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.4rem;
+}
+
+.canvas-controls button {
+  width: auto;
+}
+
+.workspace {
+  width: 100%;
+  height: calc(100vh - 120px);
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.stats ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1rem;
+}
