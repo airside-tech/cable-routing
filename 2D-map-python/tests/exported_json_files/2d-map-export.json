@@ -1,0 +1,337 @@
+{
+  "version": 1,
+  "rooms": [
+    {
+      "id": "room-75e595d5bc",
+      "name": "Room A",
+      "widthMeters": 8.0,
+      "heightMeters": 6.0,
+      "wallPoints": [
+        {
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "x": 8.0,
+          "y": 0.0
+        },
+        {
+          "x": 8.0,
+          "y": 6.0
+        },
+        {
+          "x": 0.0,
+          "y": 6.0
+        }
+      ],
+      "dividerWalls": [],
+      "gridSizeMeters": 1.0,
+      "background": "#f4f5f7"
+    },
+    {
+      "id": "room-2ef89fcee6",
+      "name": "QA Room",
+      "widthMeters": 7.0,
+      "heightMeters": 4.0,
+      "wallPoints": [
+        {
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "x": 7.0,
+          "y": 0.0
+        },
+        {
+          "x": 7.0,
+          "y": 4.0
+        },
+        {
+          "x": 0.0,
+          "y": 4.0
+        }
+      ],
+      "dividerWalls": [],
+      "gridSizeMeters": 1.0,
+      "background": "#f4f5f7"
+    },
+    {
+      "id": "room-de52a35835",
+      "name": "QA Room",
+      "widthMeters": 7.0,
+      "heightMeters": 4.0,
+      "wallPoints": [
+        {
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "x": 7.0,
+          "y": 0.0
+        },
+        {
+          "x": 7.0,
+          "y": 4.0
+        },
+        {
+          "x": 0.0,
+          "y": 4.0
+        }
+      ],
+      "dividerWalls": [],
+      "gridSizeMeters": 1.0,
+      "background": "#f4f5f7"
+    },
+    {
+      "id": "room-db66ec7049",
+      "name": "QA Room 2",
+      "widthMeters": 8.0,
+      "heightMeters": 6.0,
+      "wallPoints": [
+        {
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "x": 8.0,
+          "y": 0.0
+        },
+        {
+          "x": 8.0,
+          "y": 6.0
+        },
+        {
+          "x": 0.0,
+          "y": 6.0
+        }
+      ],
+      "dividerWalls": [
+        {
+          "from": {
+            "x": 1.0,
+            "y": 1.0
+          },
+          "to": {
+            "x": 6.0,
+            "y": 4.0
+          }
+        }
+      ],
+      "gridSizeMeters": 0.1,
+      "background": "#f4f5f7"
+    }
+  ],
+  "objects": [
+    {
+      "id": "obj-d84766a177",
+      "roomId": "room-2ef89fcee6",
+      "shape": "rectangle",
+      "x": 3.0,
+      "y": 2.0,
+      "width": 1.6,
+      "height": 1.0,
+      "label": "",
+      "name": "",
+      "comment": ""
+    },
+    {
+      "id": "obj-9b79f740c6",
+      "roomId": "room-de52a35835",
+      "shape": "rectangle",
+      "x": 3.0,
+      "y": 2.0,
+      "width": 1.6,
+      "height": 1.0,
+      "label": "",
+      "name": "",
+      "comment": ""
+    },
+    {
+      "id": "obj-bda9434f00",
+      "roomId": "room-db66ec7049",
+      "shape": "square",
+      "x": 6.2,
+      "y": 0.5,
+      "width": 1.0,
+      "height": 0.7,
+      "label": "",
+      "name": "",
+      "comment": ""
+    },
+    {
+      "id": "obj-7894db48f9",
+      "roomId": "room-db66ec7049",
+      "shape": "square",
+      "x": 3.6,
+      "y": 0.4,
+      "width": 0.6,
+      "height": 0.7,
+      "label": "",
+      "name": "",
+      "comment": ""
+    },
+    {
+      "id": "obj-727ce002f5",
+      "roomId": "room-db66ec7049",
+      "shape": "square",
+      "x": 4.8,
+      "y": 0.5,
+      "width": 1.0,
+      "height": 1.0,
+      "label": "",
+      "name": "",
+      "comment": ""
+    }
+  ],
+  "cables": [
+    {
+      "id": "cable-15aedbbbce",
+      "label": "Cable A",
+      "tag": "NET-1",
+      "comment": "qa cable",
+      "type": "network",
+      "diameterMm": 12.0,
+      "color": "#777777",
+      "points": [
+        {
+          "x": 1.0,
+          "y": 1.0,
+          "roomId": "room-de52a35835"
+        },
+        {
+          "x": 3.5,
+          "y": 1.0,
+          "roomId": "room-de52a35835"
+        },
+        {
+          "x": 6.0,
+          "y": 1.0,
+          "roomId": "room-de52a35835"
+        }
+      ],
+      "bendRadiusMeters": [
+        0.0
+      ],
+      "lengthMode": "fixed",
+      "fixedLengthMeters": 25.5
+    },
+    {
+      "id": "cable-6303581e83",
+      "label": "test",
+      "tag": "",
+      "comment": "",
+      "type": "network",
+      "diameterMm": 10.0,
+      "color": "#777777",
+      "points": [
+        {
+          "x": 4.6,
+          "y": 3.2,
+          "roomId": "room-db66ec7049"
+        },
+        {
+          "x": 4.5,
+          "y": 4.0,
+          "roomId": "room-db66ec7049"
+        },
+        {
+          "x": 5.3,
+          "y": 4.6,
+          "roomId": "room-db66ec7049"
+        },
+        {
+          "x": 5.9,
+          "y": 4.7,
+          "roomId": "room-db66ec7049"
+        }
+      ],
+      "bendRadiusMeters": [
+        0.0,
+        0.0
+      ],
+      "lengthMode": "dynamic",
+      "fixedLengthMeters": null
+    },
+    {
+      "id": "cable-861514ede8",
+      "label": "test",
+      "tag": "",
+      "comment": "",
+      "type": "network",
+      "diameterMm": 10.0,
+      "color": "#777777",
+      "points": [
+        {
+          "x": 5.9,
+          "y": 4.7,
+          "roomId": "room-db66ec7049"
+        },
+        {
+          "x": 5.9,
+          "y": 4.7,
+          "roomId": "room-db66ec7049"
+        },
+        {
+          "x": 5.9,
+          "y": 4.7,
+          "roomId": "room-db66ec7049"
+        },
+        {
+          "x": 5.9,
+          "y": 4.7,
+          "roomId": "room-db66ec7049"
+        }
+      ],
+      "bendRadiusMeters": [
+        0.0,
+        0.0
+      ],
+      "lengthMode": "dynamic",
+      "fixedLengthMeters": null
+    },
+    {
+      "id": "cable-76b3c51734",
+      "label": "test",
+      "tag": "",
+      "comment": "",
+      "type": "network",
+      "diameterMm": 10.0,
+      "color": "#777777",
+      "points": [
+        {
+          "x": 5.9,
+          "y": 4.6,
+          "roomId": "room-db66ec7049"
+        },
+        {
+          "x": 5.9,
+          "y": 4.7,
+          "roomId": "room-db66ec7049"
+        },
+        {
+          "x": 5.9,
+          "y": 4.7,
+          "roomId": "room-db66ec7049"
+        },
+        {
+          "x": 5.9,
+          "y": 4.7,
+          "roomId": "room-db66ec7049"
+        },
+        {
+          "x": 5.9,
+          "y": 4.7,
+          "roomId": "room-db66ec7049"
+        }
+      ],
+      "bendRadiusMeters": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "lengthMode": "dynamic",
+      "fixedLengthMeters": null
+    }
+  ],
+  "activeRoomId": "room-75e595d5bc"
+}
