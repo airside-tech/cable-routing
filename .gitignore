@@ -1,0 +1,24 @@
+# Rust build artifacts
+/target/
+**/target/
+
+# Cargo lock is usually tracked for binaries; keep it if you want reproducible builds.
+# If your project is intended as a library, uncomment the next line:
+# Cargo.lock
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and temp files
+*.log
+*.tmp
