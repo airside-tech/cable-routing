@@ -27,6 +27,14 @@ Desktop rewrite of the TypeScript 2D cable planning editor, implemented with PyS
 5. Room: I need to be able to delete divider walls also.
 6. Cable placement: still unable to move the points of the cables around.
 
+### UI-designer improvements to be done:
+Merge:
+newRoomBuildingEdit --> activeRoomBuildingEdit
+newRoomFloorEdit --> activeRoomFloorEdit
+newRoomNameEdit --> activeRoomNameEdit
+newRoomWidthSpin --> activeRoomWidthSpin
+newRoomHeightSpin --> activeRoomHeightSpin
+
 
 ## Requirements
 
@@ -105,3 +113,17 @@ If your environment still forces a problematic theme plugin, start with:
 ```bash
 QT_QPA_PLATFORMTHEME=xdgdesktopportal python main.py
 ```
+
+## Qt Designer workflow
+
+The main window layout now lives in this Qt Designer file:
+
+- `map2d/ui/main_window.ui`
+
+You can open and edit it with Designer:
+
+```bash
+pyside6-designer map2d/ui/main_window.ui
+```
+
+The app loads this file at runtime, then injects the custom drawing canvas widget into the left splitter panel.

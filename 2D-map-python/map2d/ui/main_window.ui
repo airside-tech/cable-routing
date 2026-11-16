@@ -1,0 +1,676 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1500</width>
+    <height>920</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>2D-map Python (PySide6)</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="rootLayout">
+    <property name="leftMargin">
+     <number>6</number>
+    </property>
+    <property name="topMargin">
+     <number>6</number>
+    </property>
+    <property name="rightMargin">
+     <number>6</number>
+    </property>
+    <property name="bottomMargin">
+     <number>6</number>
+    </property>
+    <item>
+     <widget class="QSplitter" name="splitterMain">
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+      <widget class="QWidget" name="canvasPlaceholder" native="true"/>
+      <widget class="QWidget" name="sidePanel">
+       <layout class="QVBoxLayout" name="sideLayout">
+        <property name="leftMargin">
+         <number>6</number>
+        </property>
+        <property name="topMargin">
+         <number>6</number>
+        </property>
+        <property name="rightMargin">
+         <number>6</number>
+        </property>
+        <property name="bottomMargin">
+         <number>6</number>
+        </property>
+        <item>
+         <widget class="QTabWidget" name="tabs">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="roomTab">
+           <attribute name="title">
+            <string>Room</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="roomLayout">
+            <item>
+             <layout class="QHBoxLayout" name="roomSelectorLayout">
+              <item>
+               <widget class="QLabel" name="activeRoomLabel">
+                <property name="text">
+                 <string>Active room:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="activeRoomCombo"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QFormLayout" name="activeRoomForm">
+              <item row="0" column="0">
+               <widget class="QLabel" name="activeRoomBuildingLabel">
+                <property name="text">
+                 <string>Building</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="activeRoomBuildingEdit"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="activeRoomFloorLabel">
+                <property name="text">
+                 <string>Floor</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="activeRoomFloorEdit"/>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="activeRoomNameLabel">
+                <property name="text">
+                 <string>Room name</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QLineEdit" name="activeRoomNameEdit"/>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="activeRoomWidthLabel">
+                <property name="text">
+                 <string>Room width (m)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QDoubleSpinBox" name="activeRoomWidthSpin"/>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="activeRoomHeightLabel">
+                <property name="text">
+                 <string>Room height (m)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QDoubleSpinBox" name="activeRoomHeightSpin"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QPushButton" name="createRoomButton">
+              <property name="text">
+               <string>Create room</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="deleteActiveRoomButton">
+              <property name="text">
+               <string>Delete active room</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="modeLayout">
+              <item>
+               <widget class="QPushButton" name="modeSelectButton">
+                <property name="text">
+                 <string>Select</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="modeEditWallsButton">
+                <property name="text">
+                 <string>Edit walls</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="modeAddDividerWallButton">
+                <property name="text">
+                 <string>Add divider wall</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QPushButton" name="deleteWallPointButton">
+              <property name="text">
+               <string>Delete selected wall point</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="deleteDividerWallButton">
+              <property name="text">
+               <string>Delete selected divider wall</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="insertWallPointCheck">
+              <property name="text">
+               <string>Insert wall points when clicking edges</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="snapToGridCheck">
+              <property name="text">
+               <string>Snap to grid</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QFormLayout" name="roomPropsForm">
+              <item row="0" column="0">
+               <widget class="QLabel" name="roomGridSizeLabel">
+                <property name="text">
+                 <string>Grid size (m)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QDoubleSpinBox" name="roomGridSizeSpin"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="roomBackgroundLabel">
+                <property name="text">
+                 <string>Background</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="roomBackgroundEdit"/>
+              </item>
+              <item row="2" column="1">
+               <widget class="QPushButton" name="roomBackgroundButton">
+                <property name="text">
+                 <string>Pick color</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="roomSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="objectsTab">
+           <attribute name="title">
+            <string>Objects</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="objectsLayout">
+            <item>
+             <layout class="QHBoxLayout" name="objectButtonsLayout">
+              <item>
+               <widget class="QPushButton" name="addSquareButton">
+                <property name="text">
+                 <string>Add square</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="addRectangleButton">
+                <property name="text">
+                 <string>Add rectangle</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="addCircleButton">
+                <property name="text">
+                 <string>Add circle</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QPushButton" name="selectMoveModeButton">
+              <property name="text">
+               <string>Select / move mode</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="deleteSelectedObjectButton">
+              <property name="text">
+               <string>Delete selected object</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QFormLayout" name="objectForm">
+              <item row="0" column="0">
+               <widget class="QLabel" name="objectNameLabel">
+                <property name="text">
+                 <string>Name</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="objectNameEdit"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="objectLabelLabel">
+                <property name="text">
+                 <string>Label</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="objectLabelEdit"/>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="objectCommentLabel">
+                <property name="text">
+                 <string>Comment</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QTextEdit" name="objectCommentEdit"/>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="objectXLabel">
+                <property name="text">
+                 <string>X</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QDoubleSpinBox" name="objectXSpin"/>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="objectYLabel">
+                <property name="text">
+                 <string>Y</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QDoubleSpinBox" name="objectYSpin"/>
+              </item>
+              <item row="5" column="0">
+               <widget class="QLabel" name="objectWidthLabel">
+                <property name="text">
+                 <string>Width</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QDoubleSpinBox" name="objectWidthSpin"/>
+              </item>
+              <item row="6" column="0">
+               <widget class="QLabel" name="objectHeightLabel">
+                <property name="text">
+                 <string>Height</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
+               <widget class="QDoubleSpinBox" name="objectHeightSpin"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="objectsSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="cablesTab">
+           <attribute name="title">
+            <string>Cables</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="cablesLayout">
+            <item>
+             <layout class="QFormLayout" name="newCableForm">
+              <item row="0" column="0">
+               <widget class="QLabel" name="cableTypeLabel">
+                <property name="text">
+                 <string>New cable type</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QComboBox" name="cableTypeCombo"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="cableLabelLabel">
+                <property name="text">
+                 <string>Label</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="cableLabelEdit"/>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="cableTagLabel">
+                <property name="text">
+                 <string>Tag</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QLineEdit" name="cableTagEdit"/>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="cableCommentLabel">
+                <property name="text">
+                 <string>Comment</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QTextEdit" name="cableCommentEdit"/>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="cableDiameterLabel">
+                <property name="text">
+                 <string>Diameter (mm)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QDoubleSpinBox" name="cableDiameterSpin"/>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="cableDraftButtonsLayout">
+              <item>
+               <widget class="QPushButton" name="startCablePlacementButton">
+                <property name="text">
+                 <string>Start cable placement</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="finishCableButton">
+                <property name="text">
+                 <string>Finish cable</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="cancelCableDraftButton">
+                <property name="text">
+                 <string>Cancel cable draft</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QPushButton" name="insertBendPointButton">
+              <property name="text">
+               <string>Insert bend point on selected segment</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="deleteSelectedCableButton">
+              <property name="text">
+               <string>Delete selected cable</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QFormLayout" name="selectedCableForm">
+              <item row="0" column="0">
+               <widget class="QLabel" name="selCableTypeLabel">
+                <property name="text">
+                 <string>Selected type</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QComboBox" name="selCableTypeCombo"/>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="selCableLabelLabel">
+                <property name="text">
+                 <string>Selected label</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="selCableLabelEdit"/>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="selCableTagLabel">
+                <property name="text">
+                 <string>Selected tag</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QLineEdit" name="selCableTagEdit"/>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="selCableCommentLabel">
+                <property name="text">
+                 <string>Selected comment</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QTextEdit" name="selCableCommentEdit"/>
+              </item>
+              <item row="4" column="0">
+               <widget class="QLabel" name="selCableDiameterLabel">
+                <property name="text">
+                 <string>Selected diameter (mm)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QDoubleSpinBox" name="selCableDiameterSpin"/>
+              </item>
+              <item row="5" column="0">
+               <widget class="QLabel" name="selLengthModeLabel">
+                <property name="text">
+                 <string>Length mode</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QComboBox" name="selLengthModeCombo"/>
+              </item>
+              <item row="6" column="0">
+               <widget class="QLabel" name="selFixedLengthLabel">
+                <property name="text">
+                 <string>Fixed length (m)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
+               <widget class="QDoubleSpinBox" name="selFixedLengthSpin"/>
+              </item>
+              <item row="7" column="0">
+               <widget class="QLabel" name="selBendRadiiLabel">
+                <property name="text">
+                 <string>Bend radii (m, CSV)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="1">
+               <widget class="QLineEdit" name="selBendRadiiEdit"/>
+              </item>
+              <item row="8" column="0">
+               <widget class="QLabel" name="selTotalLengthTextLabel">
+                <property name="text">
+                 <string>Total length (m)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="8" column="1">
+               <widget class="QLabel" name="selTotalLengthLabel">
+                <property name="text">
+                 <string>-</string>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="0">
+               <widget class="QLabel" name="selSegmentLengthsTextLabel">
+                <property name="text">
+                 <string>Segment lengths (m)</string>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="1">
+               <widget class="QLabel" name="selSegmentLengthsLabel">
+                <property name="text">
+                 <string>-</string>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="cablesSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1500</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="actionNewProject"/>
+    <addaction name="actionOpenJson"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionSaveAs"/>
+    <addaction name="actionExportJson"/>
+    <addaction name="actionImportJson"/>
+    <addaction name="separator"/>
+    <addaction name="actionClearAutosaveDraft"/>
+   </widget>
+   <addaction name="menuFile"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionNewProject">
+   <property name="text">
+    <string>New project</string>
+   </property>
+  </action>
+  <action name="actionOpenJson">
+   <property name="text">
+    <string>Open JSON...</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionSaveAs">
+   <property name="text">
+    <string>Save As...</string>
+   </property>
+  </action>
+  <action name="actionExportJson">
+   <property name="text">
+    <string>Export JSON...</string>
+   </property>
+  </action>
+  <action name="actionImportJson">
+   <property name="text">
+    <string>Import JSON...</string>
+   </property>
+  </action>
+  <action name="actionClearAutosaveDraft">
+   <property name="text">
+    <string>Clear autosave draft</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

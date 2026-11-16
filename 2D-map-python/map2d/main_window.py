@@ -3,8 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QFile, Qt
 from PySide6.QtGui import QAction, QColor
+from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -12,18 +13,15 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QFileDialog,
-    QFormLayout,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QPushButton,
     QSplitter,
-    QStatusBar,
     QTabWidget,
     QTextEdit,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -36,217 +34,246 @@ from .persistence import DraftStore, ValidationError, export_project_json, load_
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("2D-map Python (PySide6)")
-        self.resize(1500, 920)
 
         self.draft_store = DraftStore()
         self.data: EditorData = self.draft_store.load() or create_initial_data()
         self.current_file: Path | None = None
 
+        self._load_ui()
+        self._bind_ui_widgets()
+        self._configure_ui_defaults()
+
         self.canvas = EditorCanvas(self.data)
+        self._mount_canvas()
+        self._build_menu_actions()
         self.canvas.status_changed.connect(self._set_status)
         self.canvas.data_changed.connect(self._on_data_changed)
         self.canvas.selection_changed.connect(self._sync_forms_from_selection)
 
-        self._build_menu()
-        self._build_ui()
+        self._connect_ui_signals()
         self._configure_input_direction()
         self._sync_forms_from_data()
         self._sync_forms_from_selection()
 
         self._set_status("Ready")
 
-    def _build_menu(self) -> None:
-        menu = self.menuBar().addMenu("&File")
+    def _load_ui(self) -> None:
+        ui_path = Path(__file__).resolve().parent / "ui" / "main_window.ui"
+        loader = QUiLoader()
+        ui_file = QFile(str(ui_path))
+        if not ui_file.open(QFile.OpenModeFlag.ReadOnly):
+            raise RuntimeError(f"Cannot open UI file: {ui_path}")
+        loaded = loader.load(ui_file)
+        ui_file.close()
+        if loaded is None:
+            raise RuntimeError(f"Failed to load UI file: {ui_path}")
+        if not isinstance(loaded, QMainWindow):
+            raise RuntimeError(f"UI root is not QMainWindow: {ui_path}")
 
-        action_new = QAction("New project", self)
-        action_new.triggered.connect(self._new_project)
-        menu.addAction(action_new)
+        self.setWindowTitle(loaded.windowTitle())
+        self.resize(loaded.size())
 
-        action_open = QAction("Open JSON...", self)
-        action_open.triggered.connect(self._open_project)
-        menu.addAction(action_open)
+        central = loaded.takeCentralWidget()
+        if central is not None:
+            self.setCentralWidget(central)
+        menu_bar = loaded.menuBar()
+        if menu_bar is not None:
+            self.setMenuBar(menu_bar)
+        status_bar = loaded.statusBar()
+        if status_bar is not None:
+            self.setStatusBar(status_bar)
 
-        action_save = QAction("Save", self)
-        action_save.triggered.connect(self._save_project)
-        menu.addAction(action_save)
+        loaded.deleteLater()
 
-        action_save_as = QAction("Save As...", self)
-        action_save_as.triggered.connect(self._save_project_as)
-        menu.addAction(action_save_as)
+    def _require_widget(self, widget_type: type[QWidget], object_name: str) -> QWidget:
+        widget = self.findChild(widget_type, object_name)
+        if widget is None:
+            raise RuntimeError(f"Missing UI widget: {object_name}")
+        return widget
 
-        action_export = QAction("Export JSON...", self)
-        action_export.triggered.connect(self._export_json)
-        menu.addAction(action_export)
+    def _find_widget(self, widget_type: type[QWidget], object_name: str) -> QWidget | None:
+        return self.findChild(widget_type, object_name)
 
-        action_import = QAction("Import JSON...", self)
-        action_import.triggered.connect(self._open_project)
-        menu.addAction(action_import)
+    def _bind_ui_widgets(self) -> None:
+        self.splitter_main = self._require_widget(QSplitter, "splitterMain")
+        self.canvas_placeholder = self._require_widget(QWidget, "canvasPlaceholder")
+        self.tabs = self._require_widget(QTabWidget, "tabs")
 
-        menu.addSeparator()
-        action_clear_draft = QAction("Clear autosave draft", self)
-        action_clear_draft.triggered.connect(self._clear_draft)
-        menu.addAction(action_clear_draft)
+        # Room tab (active room))
+        self.active_room_combo = self._require_widget(QComboBox, "activeRoomCombo")
+        self.active_room_name = self._require_widget(QLineEdit, "activeRoomNameEdit")
+        self.active_room_building = self._require_widget(QLineEdit, "activeRoomBuildingEdit")
+        self.active_room_floor = self._require_widget(QLineEdit, "activeRoomFloorEdit")
+        self.active_room_width = self._require_widget(QDoubleSpinBox, "activeRoomWidthSpin")
+        self.active_room_height = self._require_widget(QDoubleSpinBox, "activeRoomHeightSpin")
 
-    def _build_ui(self) -> None:
-        root = QWidget()
-        root_layout = QHBoxLayout(root)
-        root_layout.setContentsMargins(6, 6, 6, 6)
+        # Optional: these controls may be removed in customized .ui files.
+        self.new_room_name = self._find_widget(QLineEdit, "newRoomNameEdit")
+        self.new_room_building = self._find_widget(QLineEdit, "newRoomBuildingEdit")
+        self.new_room_floor = self._find_widget(QLineEdit, "newRoomFloorEdit")
+        self.new_room_width = self._find_widget(QDoubleSpinBox, "newRoomWidthSpin")
+        self.new_room_height = self._find_widget(QDoubleSpinBox, "newRoomHeightSpin")
 
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        splitter.addWidget(self.canvas)
+        self.create_room_button = self._require_widget(QPushButton, "createRoomButton")
+        self.delete_active_room_button = self._require_widget(QPushButton, "deleteActiveRoomButton")
+        self.mode_select_button = self._require_widget(QPushButton, "modeSelectButton")
+        self.mode_edit_walls_button = self._require_widget(QPushButton, "modeEditWallsButton")
+        self.mode_add_divider_wall_button = self._require_widget(QPushButton, "modeAddDividerWallButton")
+        self.delete_wall_point_button = self._require_widget(QPushButton, "deleteWallPointButton")
+        self.delete_divider_wall_button = self._require_widget(QPushButton, "deleteDividerWallButton")
+        self.insert_wall_point = self._require_widget(QCheckBox, "insertWallPointCheck")
+        self.snap_to_grid = self._require_widget(QCheckBox, "snapToGridCheck")
+        self.room_grid_size = self._require_widget(QDoubleSpinBox, "roomGridSizeSpin")
+        self.room_background_text = self._require_widget(QLineEdit, "roomBackgroundEdit")
+        self.room_background_button = self._require_widget(QPushButton, "roomBackgroundButton")
 
-        side_panel = QWidget()
-        side_layout = QVBoxLayout(side_panel)
-        side_layout.setContentsMargins(6, 6, 6, 6)
+        self.add_square_button = self._require_widget(QPushButton, "addSquareButton")
+        self.add_rectangle_button = self._require_widget(QPushButton, "addRectangleButton")
+        self.add_circle_button = self._require_widget(QPushButton, "addCircleButton")
+        self.select_move_mode_button = self._require_widget(QPushButton, "selectMoveModeButton")
+        self.delete_selected_object_button = self._require_widget(QPushButton, "deleteSelectedObjectButton")
+        self.object_name = self._require_widget(QLineEdit, "objectNameEdit")
+        self.object_label = self._require_widget(QLineEdit, "objectLabelEdit")
+        self.object_comment = self._require_widget(QTextEdit, "objectCommentEdit")
+        self.object_x = self._require_widget(QDoubleSpinBox, "objectXSpin")
+        self.object_y = self._require_widget(QDoubleSpinBox, "objectYSpin")
+        self.object_width = self._require_widget(QDoubleSpinBox, "objectWidthSpin")
+        self.object_height = self._require_widget(QDoubleSpinBox, "objectHeightSpin")
 
-        self.tabs = QTabWidget()
-        self.tabs.addTab(self._build_room_tab(), "Room")
-        self.tabs.addTab(self._build_objects_tab(), "Objects")
-        self.tabs.addTab(self._build_cables_tab(), "Cables")
-        side_layout.addWidget(self.tabs)
+        self.cable_type = self._require_widget(QComboBox, "cableTypeCombo")
+        self.cable_label = self._require_widget(QLineEdit, "cableLabelEdit")
+        self.cable_tag = self._require_widget(QLineEdit, "cableTagEdit")
+        self.cable_comment = self._require_widget(QTextEdit, "cableCommentEdit")
+        self.cable_diameter = self._require_widget(QDoubleSpinBox, "cableDiameterSpin")
+        self.start_cable_placement_button = self._require_widget(QPushButton, "startCablePlacementButton")
+        self.finish_cable_button = self._require_widget(QPushButton, "finishCableButton")
+        self.cancel_cable_draft_button = self._require_widget(QPushButton, "cancelCableDraftButton")
+        self.insert_bend_point_button = self._require_widget(QPushButton, "insertBendPointButton")
+        self.delete_selected_cable_button = self._require_widget(QPushButton, "deleteSelectedCableButton")
 
-        splitter.addWidget(side_panel)
-        splitter.setSizes([1100, 380])
+        self.sel_cable_type = self._require_widget(QComboBox, "selCableTypeCombo")
+        self.sel_cable_label = self._require_widget(QLineEdit, "selCableLabelEdit")
+        self.sel_cable_tag = self._require_widget(QLineEdit, "selCableTagEdit")
+        self.sel_cable_comment = self._require_widget(QTextEdit, "selCableCommentEdit")
+        self.sel_cable_diameter = self._require_widget(QDoubleSpinBox, "selCableDiameterSpin")
+        self.sel_length_mode = self._require_widget(QComboBox, "selLengthModeCombo")
+        self.sel_fixed_length = self._require_widget(QDoubleSpinBox, "selFixedLengthSpin")
+        self.sel_bend_radii = self._require_widget(QLineEdit, "selBendRadiiEdit")
+        self.sel_total_length = self._require_widget(QLabel, "selTotalLengthLabel")
+        self.sel_segment_lengths = self._require_widget(QLabel, "selSegmentLengthsLabel")
 
-        root_layout.addWidget(splitter)
-        self.setCentralWidget(root)
-
-        status_bar = QStatusBar()
-        self.setStatusBar(status_bar)
-
-    def _build_room_tab(self) -> QWidget:
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-
-        room_selector_layout = QHBoxLayout()
-        room_selector_layout.addWidget(QLabel("Active room:"))
-        self.active_room_combo = QComboBox()
-        self.active_room_combo.currentIndexChanged.connect(self._on_active_room_change)
-        room_selector_layout.addWidget(self.active_room_combo)
-        layout.addLayout(room_selector_layout)
-
-        active_form = QFormLayout()
-        self.active_room_name = QLineEdit()
-        self.active_room_name.editingFinished.connect(self._update_active_room_identity)
-        self.active_room_building = QLineEdit()
-        self.active_room_building.editingFinished.connect(self._update_active_room_identity)
-        self.active_room_floor = QLineEdit()
-        self.active_room_floor.editingFinished.connect(self._update_active_room_identity)
-        self.active_room_width = QDoubleSpinBox()
+    def _configure_ui_defaults(self) -> None:
         self.active_room_width.setRange(1.0, 1000.0)
-        self.active_room_width.valueChanged.connect(self._update_active_room_dimensions)
-        self.active_room_height = QDoubleSpinBox()
         self.active_room_height.setRange(1.0, 1000.0)
-        self.active_room_height.valueChanged.connect(self._update_active_room_dimensions)
-        active_form.addRow("Building", self.active_room_building)
-        active_form.addRow("Floor", self.active_room_floor)
-        active_form.addRow("Room name", self.active_room_name)
-        active_form.addRow("Room width (m)", self.active_room_width)
-        active_form.addRow("Room height (m)", self.active_room_height)
-        layout.addLayout(active_form)
+        if self.new_room_width is not None:
+            self.new_room_width.setRange(1.0, 1000.0)
+            self.new_room_width.setValue(6.0)
+        if self.new_room_height is not None:
+            self.new_room_height.setRange(1.0, 1000.0)
+            self.new_room_height.setValue(5.0)
 
-        create_form = QFormLayout()
-        self.new_room_name = QLineEdit(generate_default_room_name(self.data.rooms))
-        self.new_room_building = QLineEdit()
-        self.new_room_floor = QLineEdit()
-        self.new_room_width = QDoubleSpinBox()
-        self.new_room_width.setRange(1.0, 1000.0)
-        self.new_room_width.setValue(6.0)
-        self.new_room_height = QDoubleSpinBox()
-        self.new_room_height.setRange(1.0, 1000.0)
-        self.new_room_height.setValue(5.0)
-        create_form.addRow("Building", self.new_room_building)
-        create_form.addRow("Floor", self.new_room_floor)
-        create_form.addRow("Name", self.new_room_name)
-        create_form.addRow("Width (m)", self.new_room_width)
-        create_form.addRow("Height (m)", self.new_room_height)
-        layout.addLayout(create_form)
-
-        add_room_btn = QPushButton("Create room")
-        add_room_btn.clicked.connect(self._create_room)
-        layout.addWidget(add_room_btn)
-        delete_room_btn = QPushButton("Delete active room")
-        delete_room_btn.clicked.connect(self._delete_active_room)
-        layout.addWidget(delete_room_btn)
-
-        mode_layout = QHBoxLayout()
-        mode_select = QPushButton("Select")
-        mode_select.clicked.connect(lambda: self.canvas.set_mode("select"))
-        mode_walls = QPushButton("Edit walls")
-        mode_walls.clicked.connect(lambda: self.canvas.set_mode("edit-walls"))
-        mode_divider = QPushButton("Add divider wall")
-        mode_divider.clicked.connect(lambda: self.canvas.set_mode("add-divider-wall"))
-        mode_layout.addWidget(mode_select)
-        mode_layout.addWidget(mode_walls)
-        mode_layout.addWidget(mode_divider)
-        layout.addLayout(mode_layout)
-        delete_wall_point_btn = QPushButton("Delete selected wall point")
-        delete_wall_point_btn.clicked.connect(self._delete_selected_wall_point)
-        layout.addWidget(delete_wall_point_btn)
-        delete_divider_btn = QPushButton("Delete selected divider wall")
-        delete_divider_btn.clicked.connect(self._delete_selected_divider_wall)
-        layout.addWidget(delete_divider_btn)
-
-        self.insert_wall_point = QCheckBox("Insert wall points when clicking edges")
-        self.insert_wall_point.toggled.connect(self.canvas.set_insert_wall_point_mode)
-        layout.addWidget(self.insert_wall_point)
-
-        self.snap_to_grid = QCheckBox("Snap to grid")
-        self.snap_to_grid.setChecked(True)
-        self.snap_to_grid.toggled.connect(self.canvas.set_snap_to_grid)
-        layout.addWidget(self.snap_to_grid)
-
-        room_props_form = QFormLayout()
-        self.room_grid_size = QDoubleSpinBox()
         self.room_grid_size.setRange(0.0, 50.0)
         self.room_grid_size.setSingleStep(0.1)
-        self.room_grid_size.valueChanged.connect(self._update_room_properties)
+        self.snap_to_grid.setChecked(True)
 
-        self.room_background_text = QLineEdit()
+        self.object_comment.setFixedHeight(64)
+        self.object_x.setRange(0.0, 10000.0)
+        self.object_y.setRange(0.0, 10000.0)
+        self.object_width.setRange(0.1, 10000.0)
+        self.object_height.setRange(0.1, 10000.0)
+
+        self.cable_comment.setFixedHeight(64)
+        self.cable_diameter.setRange(0.1, 500.0)
+        self.cable_diameter.setValue(10.0)
+        self.cable_type.clear()
+        self.cable_type.addItems(["network", "power230", "power400", "fiber"])
+
+        self.sel_cable_comment.setFixedHeight(64)
+        self.sel_cable_diameter.setRange(0.1, 500.0)
+        self.sel_length_mode.clear()
+        self.sel_length_mode.addItems(["dynamic", "fixed"])
+        self.sel_fixed_length.setRange(0.0, 100000.0)
+        self.sel_cable_type.clear()
+        self.sel_cable_type.addItems(["network", "power230", "power400", "fiber"])
+        self.sel_segment_lengths.setWordWrap(True)
+        self.sel_total_length.setText("-")
+        self.sel_segment_lengths.setText("-")
+
+        if self.new_room_name is not None:
+            self.new_room_name.setText(generate_default_room_name(self.data.rooms))
+
+    def _mount_canvas(self) -> None:
+        placeholder_index = self.splitter_main.indexOf(self.canvas_placeholder)
+        if placeholder_index >= 0:
+            self.splitter_main.replaceWidget(placeholder_index, self.canvas)
+            self.canvas_placeholder.deleteLater()
+        else:
+            self.splitter_main.insertWidget(0, self.canvas)
+        self.splitter_main.setStretchFactor(0, 3)
+        self.splitter_main.setStretchFactor(1, 1)
+        self.splitter_main.setSizes([1100, 380])
+
+    def _build_menu_actions(self) -> None:
+        file_menu = self.findChild(QMenu, "menuFile")
+        if file_menu is None:
+            file_menu = self.menuBar().addMenu("&File")
+
+        self.action_new_project = self.findChild(QAction, "actionNewProject") or QAction("New project", self)
+        self.action_open_json = self.findChild(QAction, "actionOpenJson") or QAction("Open JSON...", self)
+        self.action_save = self.findChild(QAction, "actionSave") or QAction("Save", self)
+        self.action_save_as = self.findChild(QAction, "actionSaveAs") or QAction("Save As...", self)
+        self.action_export_json = self.findChild(QAction, "actionExportJson") or QAction("Export JSON...", self)
+        self.action_import_json = self.findChild(QAction, "actionImportJson") or QAction("Import JSON...", self)
+        self.action_clear_autosave_draft = self.findChild(QAction, "actionClearAutosaveDraft") or QAction(
+            "Clear autosave draft", self
+        )
+
+        for action in (
+            self.action_new_project,
+            self.action_open_json,
+            self.action_save,
+            self.action_save_as,
+            self.action_export_json,
+            self.action_import_json,
+            self.action_clear_autosave_draft,
+        ):
+            if action not in file_menu.actions():
+                file_menu.addAction(action)
+
+    def _connect_ui_signals(self) -> None:
+        self.action_new_project.triggered.connect(self._new_project)
+        self.action_open_json.triggered.connect(self._open_project)
+        self.action_save.triggered.connect(self._save_project)
+        self.action_save_as.triggered.connect(self._save_project_as)
+        self.action_export_json.triggered.connect(self._export_json)
+        self.action_import_json.triggered.connect(self._open_project)
+        self.action_clear_autosave_draft.triggered.connect(self._clear_draft)
+
+        self.active_room_combo.currentIndexChanged.connect(self._on_active_room_change)
+        self.active_room_name.editingFinished.connect(self._update_active_room_identity)
+        self.active_room_building.editingFinished.connect(self._update_active_room_identity)
+        self.active_room_floor.editingFinished.connect(self._update_active_room_identity)
+        self.active_room_width.valueChanged.connect(self._update_active_room_dimensions)
+        self.active_room_height.valueChanged.connect(self._update_active_room_dimensions)
+
+        self.create_room_button.clicked.connect(self._create_room)
+        self.delete_active_room_button.clicked.connect(self._delete_active_room)
+        self.mode_select_button.clicked.connect(lambda: self.canvas.set_mode("select"))
+        self.mode_edit_walls_button.clicked.connect(lambda: self.canvas.set_mode("edit-walls"))
+        self.mode_add_divider_wall_button.clicked.connect(lambda: self.canvas.set_mode("add-divider-wall"))
+        self.delete_wall_point_button.clicked.connect(self._delete_selected_wall_point)
+        self.delete_divider_wall_button.clicked.connect(self._delete_selected_divider_wall)
+        self.insert_wall_point.toggled.connect(self.canvas.set_insert_wall_point_mode)
+        self.snap_to_grid.toggled.connect(self.canvas.set_snap_to_grid)
+        self.room_grid_size.valueChanged.connect(self._update_room_properties)
         self.room_background_text.editingFinished.connect(self._update_room_properties)
-        self.room_background_button = QPushButton("Pick color")
         self.room_background_button.clicked.connect(self._pick_room_color)
 
-        room_props_form.addRow("Grid size (m)", self.room_grid_size)
-        room_props_form.addRow("Background", self.room_background_text)
-        room_props_form.addRow("", self.room_background_button)
-        layout.addLayout(room_props_form)
-
-        layout.addStretch(1)
-        return tab
-
-    def _build_objects_tab(self) -> QWidget:
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-
-        object_buttons = QHBoxLayout()
-        for shape in ("square", "rectangle", "circle"):
-            button = QPushButton(f"Add {shape}")
-            button.clicked.connect(lambda _checked=False, s=shape: self.canvas.set_mode(f"add-object-{s}"))
-            object_buttons.addWidget(button)
-        layout.addLayout(object_buttons)
-
-        select_btn = QPushButton("Select / move mode")
-        select_btn.clicked.connect(lambda: self.canvas.set_mode("select"))
-        layout.addWidget(select_btn)
-        delete_btn = QPushButton("Delete selected object")
-        delete_btn.clicked.connect(self._delete_selected_object)
-        layout.addWidget(delete_btn)
-
-        form = QFormLayout()
-        self.object_name = QLineEdit()
-        self.object_label = QLineEdit()
-        self.object_comment = QTextEdit()
-        self.object_comment.setFixedHeight(64)
-        self.object_x = QDoubleSpinBox()
-        self.object_x.setRange(0.0, 10000.0)
-        self.object_y = QDoubleSpinBox()
-        self.object_y.setRange(0.0, 10000.0)
-        self.object_width = QDoubleSpinBox()
-        self.object_width.setRange(0.1, 10000.0)
-        self.object_height = QDoubleSpinBox()
-        self.object_height.setRange(0.1, 10000.0)
+        self.add_square_button.clicked.connect(lambda: self.canvas.set_mode("add-object-square"))
+        self.add_rectangle_button.clicked.connect(lambda: self.canvas.set_mode("add-object-rectangle"))
+        self.add_circle_button.clicked.connect(lambda: self.canvas.set_mode("add-object-circle"))
+        self.select_move_mode_button.clicked.connect(lambda: self.canvas.set_mode("select"))
+        self.delete_selected_object_button.clicked.connect(self._delete_selected_object)
 
         for widget in (self.object_name, self.object_label):
             widget.editingFinished.connect(self._update_selected_object)
@@ -254,106 +281,27 @@ class MainWindow(QMainWindow):
         for spin in (self.object_x, self.object_y, self.object_width, self.object_height):
             spin.valueChanged.connect(self._update_selected_object)
 
-        form.addRow("Name", self.object_name)
-        form.addRow("Label", self.object_label)
-        form.addRow("Comment", self.object_comment)
-        form.addRow("X", self.object_x)
-        form.addRow("Y", self.object_y)
-        form.addRow("Width", self.object_width)
-        form.addRow("Height", self.object_height)
-        layout.addLayout(form)
+        self.start_cable_placement_button.clicked.connect(self._start_cable_draft)
+        self.finish_cable_button.clicked.connect(self.canvas.finish_cable_draft)
+        self.cancel_cable_draft_button.clicked.connect(self.canvas.cancel_cable_draft)
+        self.insert_bend_point_button.clicked.connect(self.canvas.insert_point_on_selected_cable_segment)
+        self.delete_selected_cable_button.clicked.connect(self._delete_selected_cable)
 
-        layout.addStretch(1)
-        return tab
-
-    def _build_cables_tab(self) -> QWidget:
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
-
-        form = QFormLayout()
-        self.cable_type = QComboBox()
-        self.cable_type.addItems(["network", "power230", "power400", "fiber"])
-        self.cable_label = QLineEdit()
-        self.cable_tag = QLineEdit()
-        self.cable_comment = QTextEdit()
-        self.cable_comment.setFixedHeight(64)
-        self.cable_diameter = QDoubleSpinBox()
-        self.cable_diameter.setRange(0.1, 500.0)
-        self.cable_diameter.setValue(10.0)
-
-        form.addRow("New cable type", self.cable_type)
-        form.addRow("Label", self.cable_label)
-        form.addRow("Tag", self.cable_tag)
-        form.addRow("Comment", self.cable_comment)
-        form.addRow("Diameter (mm)", self.cable_diameter)
-        layout.addLayout(form)
-
-        draft_row = QHBoxLayout()
-        start_btn = QPushButton("Start cable placement")
-        start_btn.clicked.connect(self._start_cable_draft)
-        finish_btn = QPushButton("Finish cable")
-        finish_btn.clicked.connect(self.canvas.finish_cable_draft)
-        cancel_btn = QPushButton("Cancel cable draft")
-        cancel_btn.clicked.connect(self.canvas.cancel_cable_draft)
-        draft_row.addWidget(start_btn)
-        draft_row.addWidget(finish_btn)
-        draft_row.addWidget(cancel_btn)
-        layout.addLayout(draft_row)
-
-        insert_bend_btn = QPushButton("Insert bend point on selected segment")
-        insert_bend_btn.clicked.connect(self.canvas.insert_point_on_selected_cable_segment)
-        layout.addWidget(insert_bend_btn)
-        delete_cable_btn = QPushButton("Delete selected cable")
-        delete_cable_btn.clicked.connect(self._delete_selected_cable)
-        layout.addWidget(delete_cable_btn)
-
-        selected_form = QFormLayout()
-        self.sel_cable_type = QComboBox()
-        self.sel_cable_type.addItems(["network", "power230", "power400", "fiber"])
         self.sel_cable_type.currentTextChanged.connect(self._update_selected_cable)
-        self.sel_cable_label = QLineEdit()
         self.sel_cable_label.editingFinished.connect(self._update_selected_cable)
-        self.sel_cable_tag = QLineEdit()
         self.sel_cable_tag.editingFinished.connect(self._update_selected_cable)
-        self.sel_cable_comment = QTextEdit()
-        self.sel_cable_comment.setFixedHeight(64)
         self.sel_cable_comment.textChanged.connect(self._update_selected_cable)
-        self.sel_cable_diameter = QDoubleSpinBox()
-        self.sel_cable_diameter.setRange(0.1, 500.0)
         self.sel_cable_diameter.valueChanged.connect(self._update_selected_cable)
-        self.sel_length_mode = QComboBox()
-        self.sel_length_mode.addItems(["dynamic", "fixed"])
         self.sel_length_mode.currentTextChanged.connect(self._update_selected_cable)
-        self.sel_fixed_length = QDoubleSpinBox()
-        self.sel_fixed_length.setRange(0.0, 100000.0)
         self.sel_fixed_length.valueChanged.connect(self._update_selected_cable)
-        self.sel_total_length = QLabel("-")
-        self.sel_segment_lengths = QLabel("-")
-        self.sel_segment_lengths.setWordWrap(True)
-        self.sel_bend_radii = QLineEdit()
         self.sel_bend_radii.editingFinished.connect(self._update_selected_cable)
-
-        selected_form.addRow("Selected type", self.sel_cable_type)
-        selected_form.addRow("Selected label", self.sel_cable_label)
-        selected_form.addRow("Selected tag", self.sel_cable_tag)
-        selected_form.addRow("Selected comment", self.sel_cable_comment)
-        selected_form.addRow("Selected diameter (mm)", self.sel_cable_diameter)
-        selected_form.addRow("Length mode", self.sel_length_mode)
-        selected_form.addRow("Fixed length (m)", self.sel_fixed_length)
-        selected_form.addRow("Bend radii (m, CSV)", self.sel_bend_radii)
-        selected_form.addRow("Total length (m)", self.sel_total_length)
-        selected_form.addRow("Segment lengths (m)", self.sel_segment_lengths)
-        layout.addLayout(selected_form)
-
-        layout.addStretch(1)
-        return tab
 
     def _set_status(self, message: str) -> None:
         if self.statusBar() is not None:
             self.statusBar().showMessage(message)
 
     def _configure_input_direction(self) -> None:
-        line_edits = (
+        line_edits = [
             self.active_room_name,
             self.active_room_building,
             self.active_room_floor,
@@ -368,8 +316,10 @@ class MainWindow(QMainWindow):
             self.sel_cable_label,
             self.sel_cable_tag,
             self.sel_bend_radii,
-        )
+        ]
         for widget in line_edits:
+            if widget is None:
+                continue
             widget.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
             widget.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
             widget.setCursorMoveStyle(Qt.CursorMoveStyle.LogicalMoveStyle)
@@ -460,19 +410,29 @@ class MainWindow(QMainWindow):
         self._set_status("Draft cleared.")
 
     def _create_room(self) -> None:
-        room_name = self.new_room_name.text().strip() or generate_default_room_name(self.data.rooms)
+        room_name = generate_default_room_name(self.data.rooms)
+        if self.new_room_name is not None:
+            room_name = self.new_room_name.text().strip() or room_name
+
+        width_meters = self.new_room_width.value() if self.new_room_width is not None else 6.0
+        height_meters = self.new_room_height.value() if self.new_room_height is not None else 5.0
+        building = self.new_room_building.text().strip() if self.new_room_building is not None else ""
+        floor = self.new_room_floor.text().strip() if self.new_room_floor is not None else ""
         room = create_room(
             name=room_name,
-            width_meters=self.new_room_width.value(),
-            height_meters=self.new_room_height.value(),
-            building=self.new_room_building.text().strip(),
-            floor=self.new_room_floor.text().strip(),
+            width_meters=width_meters,
+            height_meters=height_meters,
+            building=building,
+            floor=floor,
         )
         self.data.rooms.append(room)
         self.data.active_room_id = room.id
-        self.new_room_name.setText(generate_default_room_name(self.data.rooms))
-        self.new_room_building.clear()
-        self.new_room_floor.clear()
+        if self.new_room_name is not None:
+            self.new_room_name.setText(generate_default_room_name(self.data.rooms))
+        if self.new_room_building is not None:
+            self.new_room_building.clear()
+        if self.new_room_floor is not None:
+            self.new_room_floor.clear()
         self._sync_forms_from_data()
         self._on_data_changed()
         self.canvas.update()
@@ -627,7 +587,7 @@ class MainWindow(QMainWindow):
             self.active_room_height.blockSignals(False)
             self.room_background_text.setText(room.background)
 
-        if self.data.rooms and not self.new_room_name.text().strip():
+        if self.new_room_name is not None and self.data.rooms and not self.new_room_name.text().strip():
             self.new_room_name.setText(generate_default_room_name(self.data.rooms))
 
     def _sync_forms_from_selection(self) -> None:
